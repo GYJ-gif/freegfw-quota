@@ -52,3 +52,13 @@ curl -fsSL https://raw.githubusercontent.com/GYJ-gif/freegfw-quota/main/install-
 - [Docker 官方：数据卷](https://docs.docker.com/engine/storage/volumes/)
 - [Docker 官方：复制容器文件](https://docs.docker.com/reference/cli/docker/container/cp/)
 - [Docker 官方：重命名容器](https://docs.docker.com/reference/cli/docker/container/rename/)
+
+## Xray / Reality / Vision 计量修复（2026-10-03）
+
+修复旧调度器注入没有挂到实际 inbound worker 的问题：在启动前包装每个 worker 的原调度器，保留 mux 和 VLESS 依赖的核心默认调度器类型。若无法安装计量，不启动 Xray。
+
+Vision 的原始套接字快速复制会绕过连接计量，配额版关闭这条路径，保证流量经过计量包装；可能增加 CPU 使用，实际性能需本机验证。
+
+本地回归测试已通过真实 Xray VLESS TCP 入站验证上传＋下载计量、超额中断与提高额度恢复；并验证 Vision 禁止绕过计量的标志。尚未完成真实 Linux Reality＋Vision 端到端测试，不能用单元测试代替服务器验收。
+
+修复不会补算此前漏记的月度用量，也不会清零已正确记录的月度用量。累计上传／下载是历史统计，不能直接作为当期配额用量。
