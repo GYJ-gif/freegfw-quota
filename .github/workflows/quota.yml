@@ -1,0 +1,34 @@
+name: Quota regression
+on:
+  push:
+    branches: [main, feat/reset-day]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quota:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: haradakashiwa/freegfw
+          ref: 1e8f78a445aa19060a504f33362245e3508044cb
+          path: upstream
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.7'
+          cache-dependency-path: upstream/go.sum
+      - run: python3 scripts/unpack_bundle.py upstream
+      - run: bash -n install-quota.sh && python3 tests/test_installer.py
+      - name: Calendar and SQLite migration regression
+        working-directory: upstream
+        run: |
+          go test ./quota
+          go test -race services/quota.go services/quota_schedule_test.go
+      - name: Backend integration
+        working-directory: upstream
+        env:
+          GOMAXPROCS: '2'
+        run: go test -p 2 -tags with_utls,with_quic,with_clash_api,with_wireguard,with_gvisor ./controllers ./services

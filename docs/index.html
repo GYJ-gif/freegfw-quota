@@ -42,7 +42,7 @@
       <p>上传 + 下载，共同计入当期额度</p>
     </div>
   </section>
-  <div class="facts"><div><b>150 <small>GB / 月</small></b><span>新增用户默认额度 · 可修改</span></div><div><b>每月 2 日 <small>00:00</small></b><span>北京时间重置当期用量</span></div><div><b>0 <small>表示不限额</small></b><span>每个用户可单独设置</span></div></div>
+  <div class="facts"><div><b>150 <small>GB / 月</small></b><span>新增用户默认额度 · 可修改</span></div><div><b>每月 1 日 <small>00:00</small></b><span>默认日期 · 可在系统设置修改</span></div><div><b>0 <small>表示不限额</small></b><span>每个用户可单独设置</span></div></div>
   <div class="callout"><strong>适合一台服务器上的本地用户管理。</strong><p>本版不支持节点互联或跨节点共享额度，也不适用于 Systemd 安装和非 host 网络的现有容器。</p></div>
 
   <section id="install" class="doc-section" data-title="一键部署">
@@ -93,7 +93,8 @@ bash install-quota.sh --verify-bundle</code></pre></div><p><code>--verify-bundle
 
   <section id="quota" class="doc-section" data-title="月度配额">
     <div class="section-kicker">06 / QUOTA RULES</div><h2>每一份流量，都有清楚的规则。</h2><p class="section-lead">按用户独立设置，上传与下载相加。累计历史流量和当期配额用量是不同指标。</p>
-    <div class="table-wrap"><table><thead><tr><th scope="col">规则</th><th scope="col">具体行为</th></tr></thead><tbody><tr><th scope="row">默认额度</th><td>新增用户默认 150 GB / 月，可在用户行修改；0 表示不限额。</td></tr><tr><th scope="row">旧用户迁移</th><td>首次升级时，未设置过配额的旧用户默认不限额；已有额度和当期用量保留。</td></tr><tr><th scope="row">计量方式</th><td>上传 + 下载；1 GB = 1,000,000,000 字节。</td></tr><tr><th scope="row">重置时间</th><td>每月 2 日北京时间 00:00 重置当期用量；首次启用从零计量。</td></tr><tr><th scope="row">达到额度</th><td>断开连接并拒绝新连接；下个周期自动恢复，也可提高额度后恢复。</td></tr><tr><th scope="row">数据保存</th><td>正常退出保存用量；强杀或断电可能丢失最后约一秒用量，并发数据可能造成少量超额。</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th scope="col">规则</th><th scope="col">具体行为</th></tr></thead><tbody><tr><th scope="row">默认额度</th><td>新增用户默认 150 GB / 月，可在用户行修改；0 表示不限额。</td></tr><tr><th scope="row">旧用户迁移</th><td>首次升级时，未设置过配额的旧用户默认不限额；已有额度和当期用量保留。</td></tr><tr><th scope="row">计量方式</th><td>上传 + 下载；1 GB = 1,000,000,000 字节。</td></tr><tr><th scope="row">重置时间</th><td>默认每月 1 日北京时间 00:00；可选 1–31 日，没有该日期的月份按月末执行。</td></tr><tr><th scope="row">达到额度</th><td>断开连接并拒绝新连接；下个周期自动恢复，也可提高额度后恢复。</td></tr><tr><th scope="row">数据保存</th><td>正常退出保存用量；强杀或断电可能丢失最后约一秒用量，并发数据可能造成少量超额。</td></tr></tbody></table></div>
+    <div class="callout"><strong>设置重置日</strong><p>进入“系统设置 → 基本设置 → 月度配额重置日”，选择 1–31 日并保存。所有本地用户使用同一重置日。修改日期保留当前用量，下次按新日期重置；旧版升级默认设为 1 日，保留原周期内用量。</p></div>
     <div class="callout subtle"><strong>Vision 计量的取舍</strong><p>配额版关闭可能绕过计量的原始套接字快速复制路径，这可能增加 CPU 使用。真实 Reality + Vision 场景的端到端测试仍待完成，请以本机验收结果为准。</p></div>
   </section>
 
