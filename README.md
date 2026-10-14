@@ -1,5 +1,7 @@
 # FreeGFW 单机配额版一键升级
 
+📖 [中文网页版说明书](https://gyj-gif.github.io/freegfw-quota/) · 包含全新安装指令、配额规则、升级回退与故障排查。网站维护说明见 [SITE.md](SITE.md)。
+
 此版本在 FreeGFW 基础上增加月度流量配额。面向已经按官方 Docker 脚本安装的单机服务器，不适用于 Systemd 安装、非 host 网络或互联节点。
 
 ## 使用

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="FreeGFW 单机配额版中文使用指南：一键部署、月度流量配额、用户管理、备份回退与故障排查。">
+  <meta name="theme-color" content="#f8fafb">
+  <title>FreeGFW Quota · 单机配额版使用指南</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">跳转到正文</a>
+<header class="topbar">
+  <a class="brand" href="#overview" aria-label="FreeGFW Quota 首页"><span class="brandmark">F<span>·</span></span><span>FreeGFW <b>Quota</b></span></a>
+  <span class="header-label">中文使用指南</span>
+  <div class="header-actions"><button id="search-open" class="search-button" type="button"><span>⌕</span> 搜索文档 <kbd>/</kbd></button><button id="theme-toggle" class="icon-button" type="button" aria-label="切换为深色模式">◐</button><a class="github-link" href="https://github.com/GYJ-gif/freegfw-quota">GitHub ↗</a><button id="menu-toggle" class="icon-button mobile-only" type="button" aria-label="打开目录" aria-expanded="false" aria-controls="sidebar">☰</button></div>
+</header>
+<div class="layout">
+<aside id="sidebar" class="sidebar" aria-label="文档目录">
+  <div class="sidebar-heading">DOCUMENTATION <span>01</span></div>
+  <nav>
+    <p>开始使用</p><a href="#overview" class="active"><span>◈</span> 项目概览</a><a href="#install"><span>↗</span> 一键部署</a><a href="#setup"><span>⊞</span> 首次使用</a>
+    <p>日常管理</p><a href="#quota"><span>◴</span> 月度配额</a><a href="#upgrade"><span>↻</span> 升级与回退</a><a href="#troubleshooting"><span>⌁</span> 故障排查</a>
+    <p>了解更多</p><a href="#faq"><span>?</span> 常见问题</a><a href="#status"><span>✓</span> 版本与验证</a>
+  </nav>
+  <div class="sidebar-note"><span class="status-dot"></span> 单机 · 本地用户<p>基于 FreeGFW 的社区修改版<br>沿用上游 GPLv3 许可</p><a href="https://freegfw.com/zh">了解上游项目 ↗</a></div>
+</aside>
+<main id="main">
+  <section id="overview" class="hero doc-section" data-title="项目概览">
+    <div class="eyebrow"><span></span> FREEGFW · SINGLE-SERVER EDITION</div>
+    <h1>连接自由，<br>流量<span class="accent">有数。</span></h1>
+    <p class="hero-description">为每一位用户设定月度额度。<br>从一键部署到用量管理，让一台服务器上的共享更清楚。</p>
+    <div class="hero-actions"><a class="button primary" href="#install">开始部署 <span>↗</span></a><a class="button secondary" href="#quota">了解配额规则 <span>→</span></a></div>
+    <div class="hero-tags"><span>Docker 部署</span><span>amd64 / arm64</span><span>按用户独立计量</span></div>
+    <div class="quota-preview" aria-label="配额计算示意，非实际服务器数据">
+      <div class="preview-heading"><span><i class="status-dot"></i> 月度流量</span><span class="demo-label">示意数据</span></div>
+      <div class="preview-number">96.0 <span>/ 150 GB</span></div><div class="meter"><span></span></div>
+      <div class="preview-foot"><span>已使用 64%</span><span>剩余 54 GB</span></div>
+      <div class="preview-detail"><span>↑ 上传 <b>24 GB</b></span><span>↓ 下载 <b>72 GB</b></span></div>
+      <p>上传 + 下载，共同计入当期额度</p>
+    </div>
+  </section>
+  <div class="facts"><div><b>150 <small>GB / 月</small></b><span>新增用户默认额度 · 可修改</span></div><div><b>每月 2 日 <small>00:00</small></b><span>北京时间重置当期用量</span></div><div><b>0 <small>表示不限额</small></b><span>每个用户可单独设置</span></div></div>
+  <div class="callout"><strong>适合一台服务器上的本地用户管理。</strong><p>本版不支持节点互联或跨节点共享额度，也不适用于 Systemd 安装和非 host 网络的现有容器。它是社区修改版，并非 FreeGFW 官方发布。</p></div>
+
+  <section id="install" class="doc-section" data-title="一键部署">
+    <div class="section-kicker">01 / GET STARTED</div><h2>一条指令，从这里开始。</h2><p class="section-lead">无需先安装原版。脚本会识别现有容器，自动选择全新安装或升级。</p>
+    <div class="requirements"><span><i>✓</i> Linux 服务器</span><span><i>✓</i> root 权限</span><span><i>✓</i> amd64 / arm64</span><span><i>✓</i> 可访问 GitHub 与镜像源</span></div>
+    <div class="install-panel">
+      <div class="tabbar" role="tablist" aria-label="安装方式"><button type="button" role="tab" aria-selected="true" aria-controls="install-content" id="tab-fresh" data-mode="fresh">全新安装</button><button type="button" role="tab" aria-selected="false" aria-controls="install-content" id="tab-upgrade" data-mode="upgrade" tabindex="-1">已有实例升级</button></div>
+      <div id="install-content" role="tabpanel" aria-labelledby="tab-fresh"><p id="install-description">空白服务器直接安装配额版；没有 Docker 时，自动使用 Docker 官方脚本安装。</p>
+      <div class="port-row"><label for="panel-port">面板端口</label><input id="panel-port" type="number" min="1" max="65535" value="8080" inputmode="numeric" aria-describedby="port-note"><span id="port-note">默认 8080，可按需更改</span></div><p id="port-error" class="error" role="alert" hidden>请输入 1–65535 之间的整数端口。</p>
+      <div class="codebox"><div class="codebar"><span><i></i> TERMINAL · ROOT</span><button type="button" data-copy="install-command">复制命令</button></div><pre><code id="install-command">curl -fSL https://raw.githubusercontent.com/GYJ-gif/freegfw-quota/5c2ee144becfc6579fdb42f379aa91494b31ea92/install-quota.sh -o install-quota.sh &amp;&amp; bash install-quota.sh</code></pre></div>
+      <p class="version-note">指令固定到新装版本 <a href="https://github.com/GYJ-gif/freegfw-quota/commit/5c2ee144becfc6579fdb42f379aa91494b31ea92">5c2ee14 ↗</a>。该版本目前位于安装功能分支，尚未合并到 main。</p></div>
+    </div>
+    <div class="two-columns"><div><h3>运行前准备</h3><p>准备 <code>curl</code>、<code>tar</code>、<code>sha256sum</code>、<code>base64</code>、<code>mktemp</code> 和 <code>flock</code>。全新安装还需 <code>ss</code>，通常由 iproute2 / iproute 提供。</p><p>首次需在服务器本地构建镜像，会下载依赖并占用额外内存和磁盘；目前没有经过实机验证的最低硬件配置。</p></div><div><h3>脚本会做什么</h3><p>新装会创建持久化数据卷。升级会先构建镜像，再短暂停机、备份数据并切换容器，原容器与原数据卷保留。</p><p>脚本不会修改 SSH 或防火墙。请自行在云安全组和服务器防火墙放行面板端口，以及实际使用的节点端口。</p></div></div>
+    <details><summary>想先检查脚本，再决定运行？</summary><p>先用上方命令中 <code>&amp;&amp;</code> 之前的部分下载脚本，然后执行：</p><div class="codebox compact"><div class="codebar"><span>只检查，不部署</span><button type="button" data-copy="verify-command">复制</button></div><pre><code id="verify-command">bash install-quota.sh --help
+bash install-quota.sh --verify-bundle</code></pre></div><p><code>--verify-bundle</code> 只解码并校验内嵌源码，不部署服务。</p></details>
+  </section>
+
+  <section id="setup" class="doc-section" data-title="首次使用">
+    <div class="section-kicker">02 / FIRST CONNECTION</div><h2>部署之后，完成首次连接。</h2><p class="section-lead">安装成功代表面板已启动。完成初始化和实际连接测试后，再交给其他用户使用。</p>
+    <ol class="steps"><li><span>01</span><div><h3>打开面板，设置管理员账号</h3><p>全新安装访问 <code id="panel-address">http://服务器IP:8080</code>，立即设置管理员账号和密码。首次初始化前面板没有登录保护。升级用户继续使用原地址与原账号。</p></div></li><li><span>02</span><div><h3>配置节点，创建测试用户</h3><p>在面板按服务器环境选择并配置协议模板。添加一个独立测试用户，在用户行设置较小额度。配置节点所需的域名、证书和端口取决于所选协议。</p></div></li><li><span>03</span><div><h3>导入订阅，检查实际连接</h3><p>将面板生成的订阅或节点链接导入兼容客户端。先确认可以连接，再进行上传和下载，检查当期配额用量是否随流量增加。</p></div></li><li><span>04</span><div><h3>验证超额断连和恢复</h3><p>让测试用户达到额度，确认现有连接中断、无法建立新连接；随后提高额度，确认能恢复连接。完成这些检查后再设置正式额度。</p></div></li></ol>
+  </section>
+
+  <section id="quota" class="doc-section" data-title="月度配额">
+    <div class="section-kicker">03 / QUOTA RULES</div><h2>每一份流量，都有清楚的规则。</h2><p class="section-lead">按用户独立设置，上传与下载相加。累计历史流量和当期配额用量是不同指标。</p>
+    <div class="table-wrap"><table><thead><tr><th scope="col">规则</th><th scope="col">具体行为</th></tr></thead><tbody><tr><th scope="row">默认额度</th><td>新增用户默认 150 GB / 月，可在用户行修改；0 表示不限额。</td></tr><tr><th scope="row">旧用户迁移</th><td>首次升级时，未设置过配额的旧用户默认不限额；已有额度和当期用量保留。</td></tr><tr><th scope="row">计量方式</th><td>上传 + 下载；1 GB = 1,000,000,000 字节。</td></tr><tr><th scope="row">重置时间</th><td>每月 2 日北京时间 00:00 重置当期用量；首次启用从零计量。</td></tr><tr><th scope="row">达到额度</th><td>断开连接并拒绝新连接；下个周期自动恢复，也可提高额度后恢复。</td></tr><tr><th scope="row">数据保存</th><td>正常退出保存用量；强杀或断电可能丢失最后约一秒用量，并发数据可能造成少量超额。</td></tr></tbody></table></div>
+    <div class="callout subtle"><strong>Vision 计量的取舍</strong><p>配额版关闭可能绕过计量的原始套接字快速复制路径，这可能增加 CPU 使用。真实 Reality + Vision 场景的端到端测试仍待完成，请以本机验收结果为准。</p></div>
+  </section>
+
+  <section id="upgrade" class="doc-section" data-title="升级与回退">
+    <div class="section-kicker">04 / DATA & RECOVERY</div><h2>升级有备份，回退有路径。</h2><p class="section-lead">适用于已有 Docker 实例。升级前先确认旧服务正常，并保留脚本输出的备份路径。</p>
+    <div class="flow" aria-label="升级流程"><div><b>01</b><strong>构建新版</strong><span>旧服务继续运行</span></div><span class="flow-arrow">→</span><div><b>02</b><strong>停机并备份</strong><span>复制 /data</span></div><span class="flow-arrow">→</span><div><b>03</b><strong>新数据卷启动</strong><span>保留原容器与数据</span></div></div>
+    <h3>升级条件</h3><p>现有容器需命名为 <code>freegfw</code>，处于运行状态，使用 <code>host</code> 网络，并有 <code>/data</code> 持久化挂载。旧面板需完成账号设置并返回登录认证要求。</p>
+    <h3>恢复到升级前</h3><p>备份位于 <code>/opt/freegfw-quota/backups/</code>。升级成功后会输出具体的 <code>rollback.sh</code> 路径；使用该完整路径执行，不要直接复制占位符。</p><div class="codebox compact"><div class="codebar"><span>示例 · 请替换为实际备份目录</span></div><pre><code>bash /opt/freegfw-quota/backups/实际备份目录/rollback.sh</code></pre></div>
+    <p>升级失败时脚本会尝试自动恢复旧容器。回退恢复的是升级前的数据，升级后新增用户、配置变动与流量统计不会自动合并回旧版。</p><div class="callout"><strong>后续更新请使用配额版脚本。</strong><p>不要使用原版 FreeGFW 安装脚本更新这个修改版。全新安装失败时保留容器和数据卷供排查，不适用“恢复旧版”流程。</p></div>
+  </section>
+
+  <section id="troubleshooting" class="doc-section" data-title="故障排查">
+    <div class="section-kicker">05 / TROUBLESHOOTING</div><h2>遇到问题，先从这里查。</h2><p class="section-lead">先确定是构建、面板访问还是节点连接的问题，再做对应处理。</p>
+    <details><summary>面板打不开</summary><p>确认安装输出成功、容器正在运行，访问端口与设置一致。检查云安全组及本机防火墙；服务器本地能访问，不代表公网已放行。新装默认使用 HTTP。</p><div class="codebox compact"><div class="codebar"><span>只读检查</span><button type="button" data-copy="diagnose-command">复制</button></div><pre><code id="diagnose-command">docker ps -a --filter name=freegfw
+docker logs --tail 100 freegfw</code></pre></div><p>日志可能包含服务器信息，公开提交问题前请隐藏密码、订阅链接与私钥。</p></details>
+    <details><summary>提示面板端口已占用</summary><p>回到上方“一键部署”，选择未被使用的端口后重新复制命令；同时调整安全组和访问地址。不要为了释放端口直接删除不明服务。</p></details>
+    <details><summary>提示 Docker 不可用或缺少工具</summary><p>已安装的 Docker 不会被重装，请先确认其服务已启动。缺少其他工具时，根据报错使用对应 Linux 发行版的包管理器安装；<code>ss</code> 通常包含在 iproute2 / iproute 中。</p></details>
+    <details><summary>镜像构建很慢或失败</summary><p>首次会下载 Go 依赖和基础镜像，耗时取决于服务器网络与资源。检查输出中的下载错误、磁盘空间或内存不足。旧实例的升级在构建成功前不会停机。</p></details>
+    <details><summary>重复运行提示旧面板未返回 401</summary><p>如果是刚安装的空白面板，请先在页面设置管理员账号和密码。已初始化时，核对面板端口；自定义端口需通过 <code>FREEGFW_PANEL_PORT</code> 传入。</p></details>
+    <details><summary>连接正常，但流量统计或断连不符合预期</summary><p>确认运行的是配额版，并查看当期配额用量，而不是累计上传 / 下载。使用独立用户重新测试上传、下载和超额恢复。计量修复不会补算此前漏记的用量；真实 Reality + Vision 组合仍需实机验证。</p></details>
+  </section>
+
+  <section id="faq" class="doc-section" data-title="常见问题">
+    <div class="section-kicker">06 / FAQ</div><h2>你可能还想知道。</h2>
+    <details><summary>必须先安装原版 FreeGFW 吗？</summary><p>不需要。本页固定版本的命令支持从零安装；仓库 main 分支上的旧脚本目前仍仅支持升级，因此请使用本页提供的完整指令。</p></details>
+    <details><summary>需要购买域名吗？</summary><p>阅读本说明网站不需要购买域名，网站使用免费的 GitHub Pages 地址。新装面板可先通过服务器 IP 和端口访问；具体节点协议或证书申请是否需要域名，取决于你的配置。</p></details>
+    <details><summary>能在 Windows 上直接运行安装命令吗？</summary><p>不能直接在 Windows PowerShell 里运行。请通过 SSH 登录 Linux 服务器，再以 root 执行本页命令。</p></details>
+    <details><summary>支持多台服务器共享一个人的配额吗？</summary><p>不支持。本版只管理单机本地用户，不能将上游的节点互联能力视作本版的跨节点配额能力。</p></details>
+    <details><summary>这是官方版吗？需要额外付费吗？</summary><p>这是基于 FreeGFW 的社区修改版，沿用上游 GPLv3 许可，不代表官方发布。部署所需的服务器、网络流量以及可选域名费用由你使用的服务商决定。</p></details>
+  </section>
+
+  <section id="status" class="doc-section" data-title="版本与验证">
+    <div class="section-kicker">07 / PROJECT STATUS</div><h2>把已知与待验证，都说明白。</h2><p class="section-lead">说明更新于 2026 年 10 月 14 日。页面启动检查不能代替实际代理连接验收。</p>
+    <div class="status-grid"><div><span class="status-label done">已完成 · 本次安装流程</span><h3>脚本与模拟流程检查</h3><p>Bash 语法、内嵌源码校验，以及新装、升级、非 host 网络、端口冲突、容器列表失败、构建失败、健康检查失败共 7 项模拟流程。</p></div><div><span class="status-label pending">待完成 · 实际服务器</span><h3>真实运行环境验证</h3><p>Docker 自动安装、Linux 镜像构建、真实容器切换及 SQLite 持久化，和 Reality + Vision 端到端测试仍需实际服务器验证。</p></div></div>
+    <p>仓库此前记录的配额单元测试与真实 Xray VLESS TCP 入站回归测试，不等同于所有协议和部署环境都已通过验证。详细说明以仓库记录为准。</p>
+    <div class="source-links"><a href="https://github.com/GYJ-gif/freegfw-quota">项目源码 ↗</a><a href="https://github.com/GYJ-gif/freegfw-quota/pull/1">新装功能 PR ↗</a><a href="https://github.com/GYJ-gif/freegfw-quota/issues">反馈问题 ↗</a><a href="https://github.com/haradakashiwa/freegfw">上游 FreeGFW ↗</a></div>
+  </section>
+  <footer><a class="brand" href="#overview"><span class="brandmark small">F<span>·</span></span><span>FreeGFW <b>Quota</b></span></a><p>单机配额版 · 社区维护的中文使用指南<br>基于上游 GPLv3 项目 · 非官方发布</p><a href="#overview">回到顶部 ↑</a></footer>
+</main>
+<aside class="on-this-page"><span>阅读路线</span><a href="#install">安装与准备</a><a href="#setup">完成首次连接</a><a href="#quota">理解计量规则</a><a href="#upgrade">保留恢复路径</a><div class="reading-note">第一次部署？<p>先安装，再用小额度测试用户验证计量与断连。</p></div></aside>
+</div>
+<dialog id="search-dialog" aria-labelledby="search-title"><div class="search-dialog-top"><label id="search-title" for="search-input">搜索文档</label><button id="search-close" type="button" aria-label="关闭搜索">✕</button></div><input id="search-input" type="search" placeholder="输入关键词，如：端口、回退、配额" autocomplete="off"><div id="search-results" aria-live="polite"></div><p class="search-hint">在本页查找 · Esc 关闭</p></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
