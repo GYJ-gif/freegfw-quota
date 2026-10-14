@@ -524,8 +524,8 @@ FREEGFW_QUOTA_SOURCE
 
 case "${1:-}" in
     --help)
-        printf '%s\n' 'FreeGFW 单机月度配额升级脚本' \
-            '仅适用于已运行的 freegfw Docker 容器、host 网络及持久化 /data。' \
+        printf '%s\n' 'FreeGFW 单机月度配额安装 / 升级脚本' \
+            '无 freegfw 容器时全新安装；已有容器时升级（host 网络及持久化 /data）。' \
             '运行：sudo bash install-quota.sh' \
             '只验证内嵌源码：bash install-quota.sh --verify-bundle' \
             '默认面板端口 8080；自定义端口需设置 FREEGFW_PANEL_PORT。' \
@@ -547,29 +547,51 @@ esac
 (( 10#$PANEL_PORT >= 1 && 10#$PANEL_PORT <= 65535 )) || fail '端口必须在 1 至 65535 之间。'
 case "$(uname -m)" in x86_64|aarch64|arm64) ;; *) fail '仅支持 amd64 或 arm64。' ;; esac
 
-for cmd in docker curl tar sha256sum base64 mktemp flock; do
+for cmd in curl tar sha256sum base64 mktemp flock; do
     command -v "$cmd" >/dev/null || fail "缺少工具 $cmd，请安装后重试。"
 done
-docker info >/dev/null 2>&1 || fail 'Docker 服务不可用。'
-docker inspect "$CONTAINER" >/dev/null 2>&1 || fail '未找到现有 freegfw 容器；本脚本用于升级，不会创建空白面板。'
-[[ "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$CONTAINER")" == 'host' ]] || fail '现有容器不是 host 网络，请先核对安装方式。'
-[[ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER")" == 'true' ]] || fail '现有容器没有运行，请先确认旧服务正常。'
-MOUNT_TYPE=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}{{end}}{{end}}' "$CONTAINER")
-case "$MOUNT_TYPE" in volume|bind) ;; *) fail '未找到 /data 持久化挂载，已停止升级。' ;; esac
-
-# Only test local availability; existing IP certificates need not match loopback.
-# No administrator password or subscription token is read or sent.
-SCHEME=''
-for candidate in https http; do
-    status=$(curl --silent --insecure --max-time 3 --output /dev/null --write-out '%{http_code}' "$candidate://127.0.0.1:$PANEL_PORT/" || true)
-    if [[ "$status" == '401' ]]; then SCHEME="$candidate"; break; fi
-done
-[[ -n "$SCHEME" ]] || fail '旧面板没有返回登录认证要求（401），请核对端口和密码设置。'
-
 mkdir -p "$WORK_ROOT"
 chmod 700 "$WORK_ROOT"
 exec 9>"$WORK_ROOT/upgrade.lock"
-flock -n 9 || fail '另一个升级任务正在运行。'
+flock -n 9 || fail '另一个安装或升级任务正在运行。'
+
+if ! command -v docker >/dev/null; then
+    printf '%s\n' '未安装 Docker，正在使用 Docker 官方安装脚本安装。'
+    curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+        https://get.docker.com --output "$WORK_ROOT/get-docker.sh"
+    sh "$WORK_ROOT/get-docker.sh"
+    if command -v systemctl >/dev/null; then
+        systemctl enable --now docker
+    fi
+fi
+docker info >/dev/null 2>&1 || fail 'Docker 服务不可用，请启动 Docker 后重试。'
+# Listing must succeed: an inspect failure alone must not imply a fresh install.
+CONTAINERS=$(docker container ls -a --format '{{.Names}}')
+MODE=install
+while IFS= read -r name; do
+    if [[ "$name" == "$CONTAINER" ]]; then MODE=upgrade; break; fi
+done <<< "$CONTAINERS"
+SCHEME=http
+if [[ "$MODE" == upgrade ]]; then
+    [[ "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "$CONTAINER")" == 'host' ]] || fail '现有容器不是 host 网络，请先核对安装方式。'
+    [[ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER")" == 'true' ]] || fail '现有容器没有运行，请先确认旧服务正常。'
+    MOUNT_TYPE=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Type}}{{end}}{{end}}' "$CONTAINER")
+    case "$MOUNT_TYPE" in volume|bind) ;; *) fail '未找到 /data 持久化挂载，已停止升级。' ;; esac
+    SCHEME=''
+    for candidate in https http; do
+        status=$(curl --silent --insecure --max-time 3 --output /dev/null --write-out '%{http_code}' "$candidate://127.0.0.1:$PANEL_PORT/" || true)
+        if [[ "$status" == '401' ]]; then SCHEME="$candidate"; break; fi
+    done
+    [[ -n "$SCHEME" ]] || fail '旧面板没有返回登录认证要求（401），请先完成初始化并核对端口。'
+else
+    command -v ss >/dev/null || fail '全新安装需要 ss（通常由 iproute2 或 iproute 提供）。'
+    LISTENERS=$(ss -H -ltn "sport = :$PANEL_PORT")
+    [[ -z "$LISTENERS" ]] || fail '面板端口已占用，请设置 FREEGFW_PANEL_PORT 后重试。'
+    if command -v systemctl >/dev/null && systemctl is-active --quiet freegfw; then
+        fail '发现运行中的 freegfw Systemd 服务，不支持覆盖安装。'
+    fi
+fi
+printf '部署模式：%s\n' "$MODE"
 BUILD_DIR=$(mktemp -d "$WORK_ROOT/build-XXXXXXXX")
 SOURCE_DIR="$BUILD_DIR/source"
 mkdir "$SOURCE_DIR"
@@ -583,7 +605,8 @@ write_overlay "$BUILD_DIR/source-overlay.tar.gz"
 tar -xzf "$BUILD_DIR/source-overlay.tar.gz" -C "$SOURCE_DIR"
 
 printf '%s\n' '正在本机编译新版，首次需要下载依赖并占用额外磁盘和内存；旧服务保持运行。'
-DOCKER_BUILDKIT=1 docker build --tag "$IMAGE" "$SOURCE_DIR"
+case "$(uname -m)" in x86_64) TARGET_ARCH=amd64 ;; *) TARGET_ARCH=arm64 ;; esac
+DOCKER_BUILDKIT=1 docker build --build-arg "TARGETARCH=$TARGET_ARCH" --tag "$IMAGE" "$SOURCE_DIR"
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)-${BUILD_DIR##*-}"
 BACKUP="$WORK_ROOT/backups/$STAMP"
@@ -591,6 +614,35 @@ OLD_CONTAINER="freegfw-before-quota-$STAMP"
 FAILED_CONTAINER="freegfw-quota-replaced-$STAMP"
 NEW_VOLUME="freegfw-quota-data-$STAMP"
 SEED_CONTAINER="freegfw-quota-copy-$STAMP"
+if [[ "$MODE" == install ]]; then
+    # Keep failed containers and volumes for diagnosis; never delete existing data.
+    install_failed() {
+        trap - ERR INT TERM
+        printf '安装未通过检查。请检查 docker logs freegfw；数据卷保留：%s\n' "$NEW_VOLUME" >&2
+        exit 1
+    }
+    trap install_failed ERR INT TERM
+    docker volume create "$NEW_VOLUME" >/dev/null
+    docker run --detach --name "$CONTAINER" --network host --restart unless-stopped \
+        --env "PORT=$PANEL_PORT" --mount "type=volume,src=$NEW_VOLUME,dst=/data" "$IMAGE" >/dev/null
+    healthy=false
+    for attempt in {1..30}; do
+        status=$(curl --silent --max-time 3 --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$PANEL_PORT/" || true)
+        if [[ "$status" == 200 ]] && [[ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER")" == true ]]; then
+            healthy=true
+            break
+        fi
+        sleep 2
+    done
+    [[ "$healthy" == true ]]
+    trap - ERR INT TERM
+    printf '\n配额版已安装，面板：http://<服务器IP>:%s\n' "$PANEL_PORT"
+    printf '%s\n' '请立即打开面板设置管理员账号、密码及节点。首次初始化前面板尚无登录保护。' \
+        '如无法访问，请在云安全组和防火墙中放行面板端口；脚本不会修改防火墙。' \
+        '请用独立测试用户验证代理连接、流量计量和超额断连。'
+    printf '持久化数据卷：%s\n' "$NEW_VOLUME"
+    exit 0
+fi
 mkdir -p "$BACKUP/data"
 
 restore_old() {

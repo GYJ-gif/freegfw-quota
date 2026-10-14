@@ -20,7 +20,7 @@ $('#theme-toggle').addEventListener('click', () => {
   try { localStorage.setItem('quota-docs-theme', theme); } catch { /* Private browser storage may be unavailable. */ }
 });
 
-const installUrl = 'https://raw.githubusercontent.com/GYJ-gif/freegfw-quota/5c2ee144becfc6579fdb42f379aa91494b31ea92/install-quota.sh';
+const installUrl = 'https://raw.githubusercontent.com/GYJ-gif/freegfw-quota/main/install-quota.sh';
 $('#panel-port').addEventListener('input', () => {
   const raw = $('#panel-port').value;
   const port = Number(raw);
