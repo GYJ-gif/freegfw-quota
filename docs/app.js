@@ -13,11 +13,11 @@ const setTheme = (theme) => {
   document.documentElement.dataset.theme = theme;
   $('#theme-toggle').setAttribute('aria-label', theme === 'dark' ? '切换为浅色模式' : '切换为深色模式');
 };
-try { setTheme(localStorage.getItem('quota-docs-theme') === 'dark' ? 'dark' : 'light'); } catch { setTheme('light'); }
+try { setTheme(localStorage.getItem('quota-docs-theme-v2') === 'light' ? 'light' : 'dark'); } catch { setTheme('dark'); }
 $('#theme-toggle').addEventListener('click', () => {
   const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   setTheme(theme);
-  try { localStorage.setItem('quota-docs-theme', theme); } catch { /* Private browser storage may be unavailable. */ }
+  try { localStorage.setItem('quota-docs-theme-v2', theme); } catch { /* Private browser storage may be unavailable. */ }
 });
 
 const installUrl = 'https://raw.githubusercontent.com/GYJ-gif/freegfw-quota/main/install-quota.sh';
@@ -29,7 +29,7 @@ $('#panel-port').addEventListener('input', () => {
   $('#panel-port').setAttribute('aria-invalid', String(!valid));
   $('[data-copy="install-command"]').disabled = !valid;
   if (!valid) return;
-  const run = port === 8080 ? 'bash install-quota.sh' : `env FREEGFW_PANEL_PORT=${port} bash install-quota.sh`;
+  const run = port === 8080 ? 'sudo bash install-quota.sh' : `sudo env FREEGFW_PANEL_PORT=${port} bash install-quota.sh`;
   $('#install-command').textContent = `curl -fSL ${installUrl} -o install-quota.sh && ${run}`;
   $('#panel-address').textContent = `http://服务器IP:${port}`;
 });
@@ -79,18 +79,39 @@ document.addEventListener('click', (event) => {
 
 const sections = $$('.doc-section');
 const navLinks = $$('#sidebar nav a');
-if ('IntersectionObserver' in window) {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) navLinks.forEach((link) => {
-        const active = link.hash === '#' + entry.target.id;
-        link.classList.toggle('active', active);
-        if (active) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current');
-      });
-    });
-  }, { rootMargin: '-90px 0px -65% 0px', threshold: 0 });
-  sections.forEach((section) => observer.observe(section));
-}
+const order = ['overview','install','setup','protocols','clients','quota','warp','upgrade','troubleshooting','faq'];
+sections.forEach(section => section.querySelectorAll('h2,h3').forEach((heading,i) => { heading.id = section.id+'-heading-'+i; }));
+const route = () => {
+  const id = location.hash.slice(1) || 'overview';
+  const active = document.getElementById(id);
+  const section = active?.closest('.doc-section') || document.getElementById('overview');
+  sections.forEach(item => { item.hidden = item !== section; });
+  navLinks.forEach(link => {
+    const selected = link.hash === '#' + section.id;
+    link.classList.toggle('active', selected);
+    if (selected) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current');
+  });
+  const index = order.indexOf(section.id);
+  const pager = $('#chapter-pagination'); pager.replaceChildren();
+  for (const [offset,label] of [[-1,'← 上一步'],[1,'下一步 →']]) {
+    const next = document.getElementById(order[index+offset]);
+    if (!next) { pager.append(document.createElement('span')); continue; }
+    const link = document.createElement('a'); link.href='#'+next.id;
+    const small=document.createElement('span'); small.textContent=label;
+    const title=document.createElement('strong'); title.textContent=next.dataset.title;
+    link.append(small,title); pager.append(link);
+  }
+  const toc=$('.on-this-page'); toc.replaceChildren();
+  const caption=document.createElement('span');caption.textContent='本章内容';toc.append(caption);
+  section.querySelectorAll('h2,h3').forEach((heading,i)=>{
+    if(!heading.id) heading.id=section.id+'-heading-'+i;
+    const link=document.createElement('a');link.href='#'+heading.id;link.textContent=heading.textContent;toc.append(link);
+  });
+  document.title=section.dataset.title+' · FreeGFW Quota';
+  closeMenu();
+  if(active && active !== section) active.scrollIntoView(); else window.scrollTo(0,0);
+};
+window.addEventListener('hashchange',route); route();
 
 const dialog = $('#search-dialog');
 const searchIndex = sections.map((section) => ({ id: section.id, title: section.dataset.title, text: section.textContent.replace(/\s+/g, ' ').trim() }));

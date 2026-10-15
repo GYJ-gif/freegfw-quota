@@ -1,0 +1,1 @@
+const chapters=['overview','install','setup','protocols','clients','warp','quota','upgrade','troubleshooting','faq'];if(chapters.includes(location.hash.slice(1))) location.replace('guide.html'+location.hash);
