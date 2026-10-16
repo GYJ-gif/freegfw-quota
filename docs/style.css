@@ -22,3 +22,18 @@ html[data-theme=light]{color-scheme:light;--bg:#faf9ff;--surface:#f0edf7;--text:
 .codebar i{background:#b98bff}.guide-page .sidebar{scrollbar-width:thin;scrollbar-color:#3d304e transparent}.guide-page .on-this-page a{line-height:1.7;margin-bottom:10px}.guide-page [hidden]{display:none!important}
 
 .cover>*{min-width:0}.cover-art{width:100%;max-width:440px}@media(max-width:800px){.cover{grid-template-columns:minmax(0,1fr)}.cover-art{width:100%;max-width:440px}}
+
+/* Comfortable reading: light by default, with violet accents. */
+html[data-theme=light]{--bg:#faf9ff;--surface:#f2eef8;--text:#282333;--muted:#625b70;--line:#ded7e9;--green:#7440b5;--green-soft:#eee4fb;--header:rgba(250,249,255,.95);--code:#f1edf7;--shadow:0 18px 55px #58407016}
+html[data-theme=light] .secondary,html[data-theme=light] .feature-grid>a{background:#fff;color:var(--text);border-color:var(--line)}
+html[data-theme=light] .cover h1 em{background-image:linear-gradient(110deg,#7740b7,#9254d1 65%,#6733a6)}
+html[data-theme=light] .release,html[data-theme=light] .cover-meta,html[data-theme=light] .orbit-label,html[data-theme=light] .home-stats small{color:#6c5385}
+html[data-theme=light] .feature-icon,html[data-theme=light] .journey-list a>span,html[data-theme=light] .protocol-chips span,html[data-theme=light] .node{background:#eee3fa;border-color:#d5c1e9;color:#7343a5}
+html[data-theme=light] .mini-card{background:linear-gradient(140deg,#fff,#f1e9fb);border-color:#d5c1e9;box-shadow:0 18px 50px #66339918;color:#33243f}
+html[data-theme=light] .mini-top,html[data-theme=light] .mini-bottom,html[data-theme=light] .mini-top small,html[data-theme=light] .mini-value span{color:#705b83}
+html[data-theme=light] .mini-meter{background:#e1d2f0}html[data-theme=light] .codebar{background:#e8e0f2;color:#5b4274}html[data-theme=light] .codebar button{color:#5f348a;border-color:#bba5d1}html[data-theme=light] pre{color:#372448}html[data-theme=light] .error{color:#ab2344}
+.guide-page p,.guide-page .steps p,.guide-page .instruction-list,.guide-page td,.guide-page th,.guide-page details p{font-size:16px;line-height:1.95}
+.guide-page .section-lead{font-size:18px}.guide-page .steps h3{font-size:18px}.guide-page summary{font-size:16px}.guide-page pre{font-size:14px;line-height:1.9}.guide-page .sidebar nav a{font-size:15px}.guide-page .sidebar nav p{font-size:13px}.guide-page .on-this-page{font-size:13px}.guide-page .sidebar-note,.guide-page .sidebar-note p{font-size:13px}.guide-page .version-note{font-size:14px}
+.cover-copy>p{font-size:18px}.feature-grid p,.journey p,.protocol-band p{font-size:16px;line-height:1.9}.journey-list small{font-size:14px}.journey-list b{font-size:17px}.home-stats span,.cover-meta,.protocol-chips span,.card-link,.protocol-band>a,.section-title>a,.final-cta p{font-size:14px}.home-nav a{font-size:15px}.home-main footer p,.guide-page footer p{font-size:13px}
+@media(max-width:580px){.cover-copy>p{font-size:16px}.cover-meta{font-size:11px}.home-stats span{font-size:12px}.home-stats small{font-size:12px}.guide-page p,.guide-page .steps p,.guide-page td,.guide-page th,.guide-page details p{font-size:16px}.guide-page .section-lead{font-size:17px}.guide-page pre{font-size:13px}.home-nav a{font-size:13px}.guide-page #protocols tbody th{font-size:14px}.guide-page .chapter-pagination strong{font-size:14px}}
+.guide-page #install-description{font-size:16px;line-height:1.95}.guide-page .port-row,.guide-page .port-row span,.guide-page .tabbar button{font-size:14px}.guide-page .requirements{font-size:13px}

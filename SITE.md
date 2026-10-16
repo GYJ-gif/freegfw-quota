@@ -2,9 +2,9 @@
 
 说明网站位于 `docs/`，GitHub Pages 从 main 分支的 /docs 发布，无需构建。自定义域名由 docs/CNAME 保留。
 
-- `index.html` / `home.js`：黑紫首页，旧章节链接转到指南。
+- `index.html` / `home.js`：浅色紫调首页，旧章节链接转到指南。
 - `guide.html` / `app.js`：分章部署与使用说明，支持搜索、端口命令生成、章节导航和手机菜单。
-- `style.css`：共享样式；默认深色，指南支持切换浅色。
+- `style.css`：共享样式；默认浅色，指南支持切换深色。
 
 本地预览：`python -m http.server 8773 --bind 127.0.0.1 --directory docs`。
 

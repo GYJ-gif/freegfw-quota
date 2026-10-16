@@ -13,11 +13,11 @@ const setTheme = (theme) => {
   document.documentElement.dataset.theme = theme;
   $('#theme-toggle').setAttribute('aria-label', theme === 'dark' ? '切换为浅色模式' : '切换为深色模式');
 };
-try { setTheme(localStorage.getItem('quota-docs-theme-v2') === 'light' ? 'light' : 'dark'); } catch { setTheme('dark'); }
+try { setTheme(localStorage.getItem('quota-docs-theme-v3') === 'dark' ? 'dark' : 'light'); } catch { setTheme('light'); }
 $('#theme-toggle').addEventListener('click', () => {
   const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   setTheme(theme);
-  try { localStorage.setItem('quota-docs-theme-v2', theme); } catch { /* Private browser storage may be unavailable. */ }
+  try { localStorage.setItem('quota-docs-theme-v3', theme); } catch { /* Private browser storage may be unavailable. */ }
 });
 
 const installUrl = 'https://raw.githubusercontent.com/GYJ-gif/freegfw-quota/main/install-quota.sh';
